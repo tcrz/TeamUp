@@ -1,0 +1,8 @@
+{
+  "name": "teamup",
+  "private": true,
+  "version": "0.0.1",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
