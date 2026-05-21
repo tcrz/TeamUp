@@ -8,7 +8,7 @@ export function AuthMiddleware(
   next: NextFunction,
 ) {
   try {
-    const authHeader = (req.headers as any).authorization;
+    const authHeader = req.headers.authorization;
     if(!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new Error();
     }
