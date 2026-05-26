@@ -19,5 +19,16 @@ model User {
   name String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  projects Project[]
+}
+
+model Project {
+  user User @relation(fields: [ownerId], references:[id], onDelete: Cascade)
+  id Int @id @default(autoincrement())
+  name String
+  description String?
+  ownerId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
