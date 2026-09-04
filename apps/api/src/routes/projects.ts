@@ -1,26 +1,10 @@
-import { Router, Response, Request } from "express";
+import { Response, Request, Router } from "express";
 import { prisma } from "../lib/prisma";
-import { Project } from "../generated/prisma/client";
 import { asyncHandler } from "../lib/asyncHandler";
-
-async function getProject(projectId: number, userId: number, res: Response) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-  });
-  if (!project) {
-    res.status(404).json({
-      message: "Project not found",
-    });
-    return null;
-  } else if (project.ownerId !== userId) {
-    res.status(403).json({
-      message: "Access denied",
-    });
-    return null;
-  }
-
-  return project as Project;
-}
+import { getOwnedProject } from "../services/projects";
+import { parseId } from "../lib/utils";
+import { buildResponse } from "../lib/response";
+import { HttpError } from "../lib/httpError";
 
 const projectsRouter = Router();
 
@@ -28,19 +12,14 @@ projectsRouter.post("/", asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const { name, description } = req.body;
     if (!name) {
-      return res.status(400).json({
-        name: "Name is required",
-      });
+      throw new HttpError(400, "Name is required");
     }
 
     const project = await prisma.project.create({
       data: { ownerId: userId, name, description },
     });
 
-    return res.status(201).json({
-      message: "Project created successfully",
-      data: project,
-    });
+    return res.status(201).json(buildResponse("Project created successfully", project));
 }));
 
 projectsRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
@@ -48,21 +27,15 @@ projectsRouter.get("/", asyncHandler(async (req: Request, res: Response) => {
   const projects = await prisma.project.findMany({
     where: { ownerId: userId },
   });
-  return res.status(200).json({
-    message: "Projects retrieved successfully",
-    data: projects,
-  });
+  return res.status(200).json(buildResponse("Projects retrieved successfully", projects));
 }));
 
 projectsRouter.get("/:id", asyncHandler(async (req: Request, res: Response) => {
   const userId = req?.user!.id;
   const { id } = req.params;
-  const project = await getProject(Number(id), userId, res);
-  if (!project) return;
-  return res.status(200).json({
-    message: "Project retrieved successfully",
-    data: project,
-  });
+  const parsedId = parseId(id);
+  const project = await getOwnedProject(parsedId, userId);
+  return res.status(200).json(buildResponse("Project retrieved successfully", project));
 }));
 
 projectsRouter.patch("/:id", asyncHandler(async (req: Request, res: Response) => {
@@ -70,33 +43,26 @@ projectsRouter.patch("/:id", asyncHandler(async (req: Request, res: Response) =>
   const { id } = req.params;
   const { name, description } = req.body;
   if (!name && !description) {
-    return res.status(400).json({
-      message: "Name or description is required",
-    });
+    throw new HttpError(400, "At least one of name or description must be provided");
   }
-  const project = await getProject(Number(id), userId, res);
-  if (!project) return;
+  const parsedId = parseId(id);
+  await getOwnedProject(parsedId, userId);
   const updatedProject = await prisma.project.update({
-    where: { id: Number(id) },
+    where: { id: parsedId },
     data: { name, description },
   });
 
-  return res.status(200).json({
-    message: "Project updated successfully",
-    data: updatedProject,
-  });
+  return res.status(200).json(buildResponse("Project updated successfully", updatedProject));
 }));
 
 projectsRouter.delete("/:id", asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.id;
-  const project = await getProject(Number(id), userId, res);
-  if (!project) return;
+  const parsedId = parseId(id);
+  await getOwnedProject(parsedId, userId);
   await prisma.project.delete({
-    where: { id: Number(id) },
+    where: { id: parsedId },
   });
-  return res.status(200).json({
-    message: "Project deleted successfully",
-  });
+  return res.status(200).json(buildResponse("Project deleted successfully"));
 }));
 export default projectsRouter;
