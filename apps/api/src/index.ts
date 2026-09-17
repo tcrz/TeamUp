@@ -11,7 +11,7 @@ import { buildResponse } from "./lib/response";
 export const app = express();
 
 dotenv.config();
-app.use(cors());
+app.use(cors({ origin: process.env.WEB_ORIGIN }));
 app.use(express.json());
 
 app.get('/api/health', (req: Request, res: Response) => {

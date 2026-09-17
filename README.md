@@ -60,7 +60,7 @@ teamup/
    PORT=3001
    DATABASE_URL="postgresql://teamup:teamup@localhost:5432/teamup"
    JWT_SECRET=your-super-secret-key
-   JWT_EXPIRES_IN=7d
+   JWT_ACCESS_EXPIRES_IN=7d
    ```
 
 4. Run database migrations:

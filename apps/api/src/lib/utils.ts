@@ -18,3 +18,22 @@ export const parseId = (id: string | string[] | undefined): number => {
   }
   return parsedId;
 };
+
+export function getDateFromNow(durationString: string): Date {
+  const now = new Date();
+  const match = durationString.match(/^(\d+)([a-zA-Z]+)$/);
+  
+  if (!match) throw new Error(`Invalid duration: ${durationString}`);
+
+  const value = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+
+  switch (unit) {
+    case 'm':  now.setMinutes(now.getMinutes() + value); break; // Minutes
+    case 'h':  now.setHours(now.getHours() + value); break;     // Hours
+    case 'd':  now.setDate(now.getDate() + value); break;       // Days
+    case 'mo': now.setMonth(now.getMonth() + value); break;     // Months
+    default:   throw new Error(`Unsupported unit: ${unit}`);
+  }
+  return now;
+}
