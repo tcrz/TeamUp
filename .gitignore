@@ -19,6 +19,7 @@ src/generated/
 # Logs
 *.log
 npm-debug.log*
+.next
 
 # OS
 .DS_Store

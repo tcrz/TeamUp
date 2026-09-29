@@ -1,0 +1,357 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * TeamUp — signage.
+ *
+ * The product's argument is that it contains almost nothing: three statuses, no
+ * workflow builder, no permission matrix. The design makes that emptiness read
+ * as confidence rather than absence, by borrowing from wayfinding — a few marks
+ * set large on a wide quiet field, colour used only as a signal, and hierarchy
+ * carried by size and width instead of by decoration.
+ *
+ * There are no decorative shadows. Panels separate from the page because the
+ * page is greige and the panels are white; that colour change does the work a
+ * drop shadow would otherwise do.
+ */
+@theme {
+  /* --- Ground ---------------------------------------------------------- */
+  /* A cool green-grey, closer to painted steel than to paper. */
+  --color-field: #eaece5;
+  --color-field-deep: #dfe2d9;
+  --color-surface: #ffffff;
+
+  /* --- Ink -------------------------------------------------------------- */
+  /* Display type is true black. Signage does not tint its black. */
+  --color-ink: #000000;
+  --color-graphite: #4a4c46; /* body: 9.5:1 on surface, 8.4:1 on field */
+  --color-slate: #62655e; /* meta: 5.7:1 on surface, 4.5:1 on field */
+
+  /* --- Lines ------------------------------------------------------------ */
+  --color-rule: #d7d9d0; /* dividers between rows; decorative */
+  --color-edge: #8a8d83; /* control borders; 3.4:1 on surface */
+
+  /* --- Signal ----------------------------------------------------------- */
+  /*
+   * Black on this yellow is 12.7:1 — the most legible pair available, which is
+   * the reason signage uses it. It stays scarce: work in progress, the primary
+   * action, and selection. Nothing else.
+   */
+  --color-signal: #f2c230;
+  --color-signal-deep: #d9a916;
+  --color-signal-wash: #fdf3d6;
+
+  --color-alert: #b32d1c; /* destructive confirmation only; 7.7:1 on surface */
+
+  /* --- Status ----------------------------------------------------------- */
+  /*
+   * Status is a drawn form first — hollow, half, checked — so it survives
+   * greyscale and colour blindness. Colour only reinforces what the shape
+   * already said, which is why there is no green here.
+   */
+  --color-status-todo: #8a8d83;
+  --color-status-progress: #f2c230;
+  --color-status-done: #000000;
+
+  /* --- Type ------------------------------------------------------------- */
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+
+  /*
+   * A modular scale of roughly 1.25, with a deliberate gap between `xl` and
+   * `mark`: the page has small things and one big thing, and nothing between.
+   */
+  --text-xs: 11px;
+  --text-xs--line-height: 14px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 15px;
+  --text-base--line-height: 23px;
+  --text-md: 17px;
+  --text-md--line-height: 26px;
+  --text-lg: 22px;
+  --text-lg--line-height: 28px;
+  --text-xl: 30px;
+  --text-xl--line-height: 34px;
+  --text-mark: clamp(2.75rem, 8.5vw, 6.25rem);
+  --text-mark--line-height: 0.94;
+
+  /* --- Shape ------------------------------------------------------------ */
+  /* Two values, because marks and panels are different things. */
+  --radius-mark: 2px;
+  --radius-panel: 3px;
+
+  /* The only shadow in the system: a modal genuinely floats above the page. */
+  --shadow-float: 0 12px 32px rgb(0 0 0 / 0.18);
+
+  --ease-signal: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+ * Display treatment: the same face at 125% width and weight 800. Used on the
+ * hero mark, page titles, project names, and column counts — the things you
+ * navigate by. Never on body copy.
+ */
+@utility display {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.021em;
+}
+
+/* Issue keys and counts: condensed, tabular, so columns of them align. */
+@utility keyline {
+  font-variant-numeric: tabular-nums;
+  font-stretch: 87.5%;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--color-field);
+  color: var(--color-graphite);
+}
+
+/*
+ * Focus is black with an offset. A yellow ring would vanish on the yellow
+ * primary buttons; black reads on every surface in the system.
+ */
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+/* ---- Motion --------------------------------------------------------------
+ * One orchestrated moment, on the landing page only. The board's columns
+ * settle in reading order; then one issue leaves In progress, the counts
+ * change, and the issue opens into the top of Done.
+ *
+ * Moving elements collapse and expand through max-height rather than just
+ * fading, so the column closes the gap the issue left instead of holding an
+ * empty slot. Under reduced motion only the end state exists.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes settle {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  @keyframes vacate {
+    0% {
+      opacity: 1;
+      max-height: 8rem;
+    }
+    45% {
+      opacity: 0;
+      max-height: 8rem;
+    }
+    100% {
+      opacity: 0;
+      max-height: 0;
+    }
+  }
+
+  @keyframes arrive {
+    0% {
+      opacity: 0;
+      max-height: 0;
+    }
+    45% {
+      opacity: 0;
+      max-height: 8rem;
+    }
+    100% {
+      opacity: 1;
+      max-height: 8rem;
+    }
+  }
+
+  @keyframes swap-out {
+    to {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes swap-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  .settle {
+    animation: settle 520ms var(--ease-signal) backwards;
+  }
+
+  .vacate {
+    overflow: hidden;
+    animation: vacate 560ms var(--ease-signal) 1600ms both;
+  }
+
+  .arrive {
+    overflow: hidden;
+    animation: arrive 620ms var(--ease-signal) 2050ms backwards;
+  }
+
+  .swap-out {
+    animation: swap-out 200ms ease-out 1750ms both;
+  }
+
+  .swap-in {
+    animation: swap-in 260ms var(--ease-signal) 1950ms backwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vacate {
+    display: none;
+  }
+
+  .swap-out {
+    visibility: hidden;
+  }
+}
+
+/* ---- Modal ---------------------------------------------------------------
+ * Built on <dialog> so focus trapping, Escape, and the inert background come
+ * from the platform.
+ */
+.modal {
+  margin: auto;
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-float);
+  padding: 0;
+}
+
+.modal::backdrop {
+  background-color: rgb(20 22 18 / 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+      opacity 180ms var(--ease-signal),
+      transform 180ms var(--ease-signal),
+      overlay 180ms allow-discrete,
+      display 180ms allow-discrete;
+  }
+
+  .modal:not([open]) {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  @starting-style {
+    .modal[open] {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+
+  .modal::backdrop {
+    opacity: 1;
+    transition:
+      opacity 180ms var(--ease-signal),
+      overlay 180ms allow-discrete,
+      display 180ms allow-discrete;
+  }
+
+  .modal:not([open])::backdrop {
+    opacity: 0;
+  }
+
+  @starting-style {
+    .modal[open]::backdrop {
+      opacity: 0;
+    }
+  }
+}
+
+/* ---- shadcn bridge -------------------------------------------------------
+ * shadcn's primitives read these names. This is the only alias layer in the
+ * system: one hop from a shadcn token to a TeamUp token, never a chain.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: var(--radius-mark);
+  --radius-md: var(--radius-panel);
+  --radius-lg: var(--radius-panel);
+  --radius-xl: var(--radius-panel);
+}
+
+:root {
+  --background: var(--color-field);
+  --foreground: var(--color-ink);
+
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+
+  --primary: var(--color-signal);
+  --primary-foreground: var(--color-ink);
+
+  --secondary: var(--color-field-deep);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-field);
+  --muted-foreground: var(--color-slate);
+
+  /* shadcn uses --accent for menu-item and ghost-button hover. */
+  --accent: var(--color-field-deep);
+  --accent-foreground: var(--color-ink);
+
+  --destructive: var(--color-alert);
+
+  --border: var(--color-rule);
+  --input: var(--color-edge);
+  --ring: var(--color-ink);
+
+  --radius: 3px;
+}
+
+/* The product is light-only; see DESIGN.md. */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
